@@ -1,5 +1,7 @@
 const express = require("express");
 const pool = require("./db");
+const validarUsuarios = require("../validation/usuarios")
+const validarPosts = require("../validation/posts")
 const routes = express.Router();
 // Função para formatar data e hora
 function formatarData (data){
@@ -52,7 +54,7 @@ routes.get("/posts", async (req,res)=>{
 });
 
 //INSERINDO USUARIO
-routes.post("/usuarios", async (req, res)=>{
+routes.post("/usuarios", validarUsuarios, async (req, res)=>{
     try{
         const {nome, email, senha }= req.body;
         const resultado = await pool.query(`
@@ -71,7 +73,7 @@ routes.post("/usuarios", async (req, res)=>{
 });
 
 // INSERINDO POSTAGEM
-routes.post("/posts", async(req,res) =>{
+routes.post("/posts",validarPosts, async(req,res) =>{
     try{
         const {titulo, conteudo, usuario_id} = req.body;
         const resultado = await pool.query(`
@@ -90,7 +92,7 @@ routes.post("/posts", async(req,res) =>{
     }
 });
 // ATUALIZANDO POSTAGEM 
-routes.put("/posts/:id", async(req,res)=>{
+routes.put("/posts/:id",validarPosts, async(req,res)=>{
     try{
         const {id} = req.params;
         const {titulo, conteudo} = req.body;
