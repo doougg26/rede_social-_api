@@ -51,6 +51,25 @@ routes.get("/posts", async (req,res)=>{
         }
 });
 
+//INSERINDO USUARIO
+routes.post("/usuarios", async (req, res)=>{
+    try{
+        const {nome, email, senha }= req.body;
+        const resultado = await pool.query(`
+            INSERT INTO usuarios (nome, email, senha)
+                VALUES ($1, $2, $3)
+                RETURNING *
+            `, [nome, email, senha]
+        );
+        res.status(201).json({
+            mensagem:"usuario criado com sucesso",
+            usuario: resultado.rows[0]
+        })
+    } catch(erro){
+        res.status(500).json({erro: "Erro ao criar usuario" })
+    }
+});
+
 // INSERINDO POSTAGEM
 routes.post("/posts", async(req,res) =>{
     try{
