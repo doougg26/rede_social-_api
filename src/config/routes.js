@@ -11,6 +11,49 @@ function formatarData (data){
     });
 }
 
+//INSERINDO USUARIO
+routes.post("/usuarios", validarUsuarios, async (req, res)=>{
+    try{
+        const {nome, email, senha }= req.body;
+        const resultado = await pool.query(`
+            INSERT INTO usuarios (nome, email, senha)
+                VALUES ($1, $2, $3)
+                RETURNING *
+            `, [nome, email, senha]
+        );
+        res.status(201).json({
+            mensagem:"usuario criado com sucesso",
+            usuario: resultado.rows[0]
+        })
+    } catch(erro){
+        res.status(500).json({erro: "Erro ao criar usuario" })
+    }
+});
+//Login
+
+routes.post("/login", async (req, res)=>{
+const {email, senha} = req.body;
+    
+    const usuario = await pool.query(`
+    SELECT * FROM usuarios
+    WHERE email=$1
+    AND senha =$2
+    
+    `, [email, senha])
+    
+    if(usuario.rows.length ===0){
+        return res.status(400).json({
+            mensagem:"usuario não encontrado"
+        })
+    }
+    if(senha !== usuario.rows[0].senha){
+        return res.status(400).json({
+            mensagem:"senha invalida"
+        })
+    }
+
+});
+
 routes.get("/", (req,res) =>{
     res.send("<h1>Rede Social</h1>")
 });
@@ -53,24 +96,6 @@ routes.get("/posts", async (req,res)=>{
         }
 });
 
-//INSERINDO USUARIO
-routes.post("/usuarios", validarUsuarios, async (req, res)=>{
-    try{
-        const {nome, email, senha }= req.body;
-        const resultado = await pool.query(`
-            INSERT INTO usuarios (nome, email, senha)
-                VALUES ($1, $2, $3)
-                RETURNING *
-            `, [nome, email, senha]
-        );
-        res.status(201).json({
-            mensagem:"usuario criado com sucesso",
-            usuario: resultado.rows[0]
-        })
-    } catch(erro){
-        res.status(500).json({erro: "Erro ao criar usuario" })
-    }
-});
 
 // INSERINDO POSTAGEM
 routes.post("/posts",validarPosts, async(req,res) =>{
