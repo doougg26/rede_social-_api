@@ -1,8 +1,11 @@
+require("dotenv").config();
 const express = require("express");
 const pool = require("./db");
 const validarUsuarios = require("../validation/usuarios")
 const validarPosts = require("../validation/posts")
 const routes = express.Router();
+const jwt = require("jsonwebtoken");
+const auth = require("../auth/authLogin")
 // Função para formatar data e hora
 function formatarData (data){
     return new Date(data).toLocaleString("pt-BR",{
@@ -37,9 +40,7 @@ const {email, senha} = req.body;
     const usuario = await pool.query(`
     SELECT * FROM usuarios
     WHERE email=$1
-    AND senha =$2
-    
-    `, [email, senha])
+    `, [email])
     
     if(usuario.rows.length ===0){
         return res.status(400).json({
@@ -51,7 +52,12 @@ const {email, senha} = req.body;
             mensagem:"senha invalida"
         })
     }
+    const token = jwt.sign({id: usuario.rows[0].id}, process.env.JWT_SECRET,{
+        expiresIn: "1h"
+    });
 
+    console.log("Login secrerto", process.env.JWT_SECRET)
+    res.json({token})
 });
 
 routes.get("/", (req,res) =>{
@@ -98,14 +104,14 @@ routes.get("/posts", async (req,res)=>{
 
 
 // INSERINDO POSTAGEM
-routes.post("/posts",validarPosts, async(req,res) =>{
+routes.post("/posts", auth, validarPosts, async(req,res) =>{
     try{
-        const {titulo, conteudo, usuario_id} = req.body;
+        const {titulo, conteudo} = req.body;
         const resultado = await pool.query(`
                 INSERT INTO posts (titulo, conteudo, usuario_id)
                 VALUES ($1, $2, $3)
                 RETURNING *
-            `, [titulo, conteudo, usuario_id]);
+            `, [titulo, conteudo, req.usuario.id]);
             res.status(201).json({
                 mensagem: "Post Criado com sucesso",
                 post: resultado.rows[0],
