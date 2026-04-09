@@ -123,10 +123,27 @@ routes.post("/posts", auth, validarPosts, async(req,res) =>{
     }
 });
 // ATUALIZANDO POSTAGEM 
-routes.put("/posts/:id",validarPosts, async(req,res)=>{
+routes.put("/posts/:id", auth, validarPosts, async(req,res)=>{
     try{
         const {id} = req.params;
         const {titulo, conteudo} = req.body;
+
+        const post = await pool.query(`
+            SELECT * FROM posts
+            WHERE id=$1
+            `,[id]);
+            if(post.rows.length ===0){
+        return res.status(404).json({
+            mensagem:"post não encontrado"
+        })
+    };
+        if (post.rows[0].usuario_id !== req.usuario.id){
+            return res.status(403).json({
+                mensagem:"sem permissão"
+            })
+        }
+
+
         const resultado = await pool.query(`
             UPDATE posts
             SET titulo=$1, conteudo =$2
@@ -145,10 +162,23 @@ routes.put("/posts/:id",validarPosts, async(req,res)=>{
 })
 
 // DELETANDO POSTAGEM
-    routes.delete("/posts/:id", async(req, res)=>{
+    routes.delete("/posts/:id", auth, async(req, res)=>{
        try{
              const {id} = req.params;
-
+           const post = await pool.query(`
+            SELECT * FROM posts
+            WHERE id=$1
+            `, [id]);
+           if (post.rows.length === 0) {
+               return res.status(404).json({
+                   mensagem: "post não encontrado"
+               })
+           };
+           if (post.rows[0].usuario_id !== req.usuario.id) {
+               return res.status(403).json({
+                   mensagem: "sem permissão"
+               })
+           }
             const resultado = await pool.query(`
                 DELETE FROM posts 
                 WHERE id = $1 
