@@ -6,6 +6,8 @@ const validarPosts = require("../validation/posts")
 const routes = express.Router();
 const jwt = require("jsonwebtoken");
 const auth = require("../auth/authLogin")
+const bcrypt = require("bcrypt");
+
 // Função para formatar data e hora
 function formatarData (data){
     return new Date(data).toLocaleString("pt-BR",{
@@ -17,12 +19,14 @@ function formatarData (data){
 //INSERINDO USUARIO
 routes.post("/usuarios", validarUsuarios, async (req, res)=>{
     try{
-        const {nome, email, senha }= req.body;
+        const {nome, email, senha } = req.body;
+        const senhaHash = await bcrypt.hash(senha, 10)
+
         const resultado = await pool.query(`
             INSERT INTO usuarios (nome, email, senha)
                 VALUES ($1, $2, $3)
                 RETURNING *
-            `, [nome, email, senha]
+            `, [nome, email, senhaHash]
         );
         res.status(201).json({
             mensagem:"usuario criado com sucesso",
@@ -47,9 +51,12 @@ const {email, senha} = req.body;
             mensagem:"usuario não encontrado"
         })
     }
-    if(senha !== usuario.rows[0].senha){
+
+    const senhaValida = await bcrypt.compare(senha, usuario.rows[0].senha)
+
+    if(!senhaValida){
         return res.status(400).json({
-            mensagem:"senha invalida"
+            mensagem:"senha inválida"
         })
     }
     const token = jwt.sign({id: usuario.rows[0].id}, process.env.JWT_SECRET,{
