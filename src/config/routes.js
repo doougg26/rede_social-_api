@@ -63,7 +63,6 @@ const {email, senha} = req.body;
         expiresIn: "1h"
     });
 
-    console.log("Login secrerto", process.env.JWT_SECRET)
     res.json({token})
 });
 
