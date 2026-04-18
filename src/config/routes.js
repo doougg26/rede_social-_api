@@ -90,6 +90,7 @@ routes.get("/posts", async (req,res)=>{
             usuarios.id AS usuarios_id,
             usuarios.nome,
             posts.conteudo,
+            posts.titulo,
             posts.criado_em,
             posts.id AS post_id
         FROM posts
