@@ -67,7 +67,7 @@ const {email, senha} = req.body;
 });
 
 routes.get("/", (req,res) =>{
-    res.send("<h1>Rede Social</h1>")
+    res.send("<h1>Rede Social</h1> <p>Bem-vindo à nossa API de rede social! Aqui você pode criar uma conta, fazer login e compartilhar suas postagens com outros usuários. Explore as funcionalidades e conecte-se com amigos!</p> <p> documentação <a href='https://documenter.getpostman.com/view/43110445/2sBXitC7Qc'> aqui </a></p>")
 });
 // CONSULTA DE USUARIOS
 routes.get("/usuarios", async (req, res) =>{
@@ -86,15 +86,16 @@ routes.get("/usuarios", async (req, res) =>{
 routes.get("/posts", async (req,res)=>{
     try{
         const resultado = await pool.query(`
-            SELECT
-                usuarios.id,
-                usuarios.nome,
-                posts.conteudo,
-                posts.criado_em
-            FROM posts
-            JOIN usuarios 
-            ON posts.usuario_id = usuarios.id 
-            ORDER BY posts.criado_em DESC`);
+        SELECT
+            usuarios.id AS usuarios_id,
+            usuarios.nome,
+            post.conteudo,
+            post.criado_em,
+            post.id AS post_id
+        FROM post
+        JOIN usuarios
+        ON post.usuario_id = usuarios.id
+        ORDER BY post.criado_em DESC`);
            //exemplo de uso com função de fromatação de data e hora
            const dados = resultado.rows.map((post)=>({
             ...post,
@@ -138,6 +139,7 @@ routes.put("/posts/:id", auth, validarPosts, async(req,res)=>{
             SELECT * FROM posts
             WHERE id=$1
             `,[id]);
+
             if(post.rows.length ===0){
         return res.status(404).json({
             mensagem:"post não encontrado"
@@ -152,13 +154,13 @@ routes.put("/posts/:id", auth, validarPosts, async(req,res)=>{
 
         const resultado = await pool.query(`
             UPDATE posts
-            SET titulo=$1, conteudo =$2
+            SET titulo=$1, conteudo=$2
             WHERE id=$3
             RETURNING *
             `,[titulo, conteudo, id], );
 
-            res.status(201).json({
-                mensagem: "Post Criado com sucesso",
+            res.status(200).json({
+                mensagem: "Post Atualizado com sucesso",
                 post: resultado.rows[0],});
     } catch(erro){
         res.status(500).json({
@@ -187,10 +189,10 @@ routes.put("/posts/:id", auth, validarPosts, async(req,res)=>{
            }
             const resultado = await pool.query(`
                 DELETE FROM posts 
-                WHERE id = $1 
+                WHERE id=$1 
                 RETURNING *`,[id],);
 
-                res.status(201).json({
+                res.json({
                 mensagem: "post deletado",
                 post: resultado.rows[0],});
        } catch(erro){
