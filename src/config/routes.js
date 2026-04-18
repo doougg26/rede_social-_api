@@ -89,13 +89,13 @@ routes.get("/posts", async (req,res)=>{
         SELECT
             usuarios.id AS usuarios_id,
             usuarios.nome,
-            post.conteudo,
-            post.criado_em,
-            post.id AS post_id
-        FROM post
+            posts.conteudo,
+            posts.criado_em,
+            posts.id AS post_id
+        FROM posts
         JOIN usuarios
-        ON post.usuario_id = usuarios.id
-        ORDER BY post.criado_em DESC`);
+        ON posts.usuario_id = usuarios.id
+        ORDER BY posts.criado_em DESC`);
            //exemplo de uso com função de fromatação de data e hora
            const dados = resultado.rows.map((post)=>({
             ...post,
